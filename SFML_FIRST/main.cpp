@@ -1,5 +1,6 @@
 ﻿#include <SFML/Graphics.hpp>
 #include <iostream>
+#include<vector>
 
 using namespace std;
 using namespace sf;
@@ -10,6 +11,9 @@ int main() {
     float HEIGHT = 1080;
     float baseSpeed = 200.f;
     float scaleSpeed = 0.5f;
+    float bulletOffset = 50.f;
+
+    vector<Sprite> bullets;
 
     RenderWindow window(VideoMode(WIDTH, HEIGHT), "SpaceWar");
 
@@ -37,19 +41,19 @@ int main() {
 
     Sprite enemy;
     enemy.setTexture(enemyTexture);
-    enemy.setScale(1.f, 1.f);
+    enemy.setScale(2.f, 2.f);
     enemy.setPosition(WIDTH / 2, 50);  
 
 
     Sprite playerBullet;
     playerBullet.setTexture(playerBulletTexture);
-    playerBullet.setScale(1.f, 1.f);
+    playerBullet.setScale(0.2f, 0.2f);
     playerBullet.setPosition(WIDTH / 2, HEIGHT - 200);  
 
 
     Sprite enemyBullet;
     enemyBullet.setTexture(enemyBulletTexture);
-    enemyBullet.setScale(1.f, 1.f);
+    enemyBullet.setScale(0.2f, 0.2f);
     enemyBullet.setPosition(WIDTH / 2, 100);  
 
 
@@ -61,13 +65,34 @@ int main() {
 
 
     Clock clock;
+
+
     while (window.isOpen()) {
         Event event;
         while (window.pollEvent(event)) {
-            if (event.type == Event::Closed) {
+            switch (event.type) {
+            case Event::Closed:
                 window.close();
+                break;
+            case Event::MouseButtonPressed:
+
+                if (event.mouseButton.button == Mouse::Left)
+                {
+                    Sprite newBullet(playerBulletTexture);
+                    newBullet.setScale(0.2f, 0.2f);
+
+                    // Расчет начальной позиции пули
+                    float bulletX = player.getPosition().x + player.getGlobalBounds().width / 2 - newBullet.getGlobalBounds().width / 2;
+                    float bulletY = player.getPosition().y - bulletOffset;
+                    newBullet.setPosition(bulletX, bulletY);
+
+                    bullets.push_back(newBullet);
+                }
+                break;
             }
         }
+        
+       
 
 
         float deltaTime = clock.restart().asSeconds();
@@ -105,10 +130,19 @@ int main() {
         }
 
 
+        for (auto& bullet : bullets) {
+            bullet.move(0.f, -speed * deltaTime * 3);
+        }
+
+
         window.clear(Color::Transparent);
-        window.draw(background); 
+        window.draw(background);
         window.draw(player);
-        window.display(); 
+        window.draw(enemy);
+        for (const auto& bullet : bullets) {
+            window.draw(bullet);
+        }
+        window.display();
     }
 
     return 0;
